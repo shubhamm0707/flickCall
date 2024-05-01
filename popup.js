@@ -5,6 +5,7 @@ stopBtn = document.getElementById('stop');
 joinBtn = document.getElementById('join');
 hostBtn = document.getElementById('host');
 inputIDBox = document.getElementById('groupID');
+startParty = document.getElementById('startParty');
 
 
 let stateOfUser = "user";
@@ -42,7 +43,17 @@ joinBtn.addEventListener('click', function () {
     });
 })
 
+startParty.addEventListener('click', function () {
 
+    fetch(chrome.runtime.getURL('ui.html')).then(response => response.text()).then(template => {
+
+        console.log(template);
+
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            chrome.tabs.sendMessage(tabs[0].id, { type: 'startParty', element: template});
+        }); 
+    });
+  });
 
 
 
