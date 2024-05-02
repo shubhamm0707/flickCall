@@ -1,8 +1,8 @@
 let duration = 0;
 let urlVideo = "";
-let BASE_URL = 'http://localhost:8004';
+let BASE_URL = 'http://localhost:8000';
 let groupID = "";
-
+let isPlay = false;
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   console.log(message.stateOfUser);
@@ -10,12 +10,17 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
       console.log(message.duration);
       duration = message.duration;
       urlVideo = message.url;
+      isPlay = message.isPlay;
 
+      // in case of host, we are sending data
     if (message.stateOfUser === "host") {
         groupID = message.groupID;
         SendVideoMetaData();
     }
+
+    // in case of joiner, we are fetching data
     if (message.stateOfUser === "joiner") 
+        groupID = message.groupID;
         ReceiveVideoMetaData();
   }
  });
@@ -25,7 +30,8 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 const data = {
     key: duration,
     url: urlVideo,
-    groupID: groupID
+    groupID: groupID,
+    isPlay: isPlay
 };
 
 const options = {
@@ -55,7 +61,7 @@ fetch(BASE_URL, options)
 
  function ReceiveVideoMetaData() {
   chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-      fetch(BASE_URL)
+      fetch(BASE_URL + "/?" + "groupID="+ groupID)
           .then(response => {
               if (!response.ok) {
                   throw new Error('Network response was not ok');
@@ -63,8 +69,8 @@ fetch(BASE_URL, options)
               return response.json(); // Assuming the response is JSON
           })
           .then(data => {
-            console.log("calling----");
-            console.log(tabs[0].id);
+            console.log(data);
+            console.log(tabs[0]);
               chrome.tabs.sendMessage(tabs[0].id, { type: 'getTimer', data: data });
           })
           .catch(error => {

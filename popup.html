@@ -27,60 +27,14 @@
       border-radius: 10px;
       box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
     }
-
-    h1 {
-      color: #333;
-    }
-
-    input[type="text"],
-    button {
-      padding: 10px;
-      margin: 10px;
-      border: none;
-      border-radius: 5px;
-      background-color: #f9f9f9;
-      box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
-    }
-
-    button:hover {
-      background-color: #ddd;
-    }
-
-    #play,
-    #stop {
-      background-color: #4caf50;
-      color: white;
-    }
-
-    #play:hover,
-    #stop:hover {
-      background-color: #45a049;
-    }
-
-    #timer {
-      font-size: 24px;
-      margin-top: 20px;
-    }
   </style>
   <body>
+    <!-- Here we are making UI of Extension -->
     <div class="container">
-      <h1 class="title">YouTube Timer 2.0</h1>
+      <h1 class="title">Watch Party Extension</h1>
     </div>
-
-    <input type="text" id="groupID" class="input" />
-
-    <h2 id="timer" class="timer">0.0</h2>
-
-    <button id="host" class="button">Host</button>
-    <button id="join" class="button">Join</button>
 
     <button id="startParty">Start Party</button>
-    <button id="check">Check</button>
-
-    <div>
-      <button id="play" class="action-button">Play Video</button>
-      <button id="stop" class="action-button">Stop Video</button>
-    </div>
     
     <script src="popup.js"></script>
   </body>
