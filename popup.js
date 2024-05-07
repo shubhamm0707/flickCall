@@ -9,12 +9,18 @@ let stateOfUser = "user";
 // we are integrating our extension code to youtube page
 startParty.addEventListener('click', function () {
 
-    fetch(chrome.runtime.getURL('ui.html')).then(response => response.text()).then(template => {
+    fetch(chrome.runtime.getURL('youtube.html')).then(response => response.text()).then(template => {
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
             chrome.tabs.sendMessage(tabs[0].id, { type: 'startParty', element: template});
             window.close();
-        }); 
+        });
     });
   });
+
+/* 
+
+1) web socket
+2) Account id: uuid
+*/
 
 

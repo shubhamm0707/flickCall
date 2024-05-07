@@ -1,13 +1,20 @@
+import { io } from "https://cdn.jsdelivr.net/npm/socket.io-client@4.7.1/+esm";
+
+
 let duration = 0;
 let urlVideo = "";
 let BASE_URL = 'http://localhost:8000';
 let groupID = "";
 let isPlay = false;
 
+let isConnected = false;
+let wsSocket;
+
+
+
+
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-  console.log(message.stateOfUser);
-  if (message.type === 'timer') {
-      console.log(message.duration);
+  if (message.type === 'timer' && isConnected) {
       duration = message.duration;
       urlVideo = message.url;
       isPlay = message.isPlay;
@@ -15,67 +22,99 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
       // in case of host, we are sending data
     if (message.stateOfUser === "host") {
         groupID = message.groupID;
-        SendVideoMetaData();
+        wsSocket.emit ("message", {key: duration, url: urlVideo, groupID: groupID, isPlay: isPlay});
     }
-
-    // in case of joiner, we are fetching data
-    if (message.stateOfUser === "joiner") 
+  } else if (message.type === 'hostConnection') { 
+    groupID = message.groupID;
+    MakeSocketConnectionAsHost();
+  } else if (message.type === 'joinConnection') {
+        console.log("from joinConnection");
         groupID = message.groupID;
-        ReceiveVideoMetaData();
+        ReceiveSocketDataAsJoiner();
   }
  });
 
 
- function SendVideoMetaData() {
-const data = {
-    key: duration,
-    url: urlVideo,
-    groupID: groupID,
-    isPlay: isPlay
-};
+ function MakeSocketConnectionAsHost() {
 
-const options = {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data)
-};
+    const ws = io(BASE_URL, {
+        transports: ["websocket"],
+      });
+      
+      ws.on("error", console.error);
+      ws.on("connect", () => {
+         isConnected = true;
+         wsSocket = ws;
+ });
 
-fetch(BASE_URL, options)
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Response:', data);
-    })
-    .catch(error => {
-        console.error('There was a problem with the fetch operation:', error);
-    });
-
- }
-
-
- function ReceiveVideoMetaData() {
-  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-      fetch(BASE_URL + "/?" + "groupID="+ groupID)
-          .then(response => {
-              if (!response.ok) {
-                  throw new Error('Network response was not ok');
-              }
-              return response.json(); // Assuming the response is JSON
-          })
-          .then(data => {
-            console.log(data);
-            console.log(tabs[0]);
-              chrome.tabs.sendMessage(tabs[0].id, { type: 'getTimer', data: data });
-          })
-          .catch(error => {
-              console.error('There was a problem with the fetch operation:', error);
-          });
-  });
 }
+
+
+function ReceiveSocketDataAsJoiner() {
+ if (!isConnected) { 
+    const ws = io(BASE_URL, {
+        transports: ["websocket"],
+      });
+      
+      ws.on("error", console.error);
+      ws.on("connect", () => {
+        console.log("connected");
+         isConnected = true;
+         wsSocket = ws;
+ });
+    ws.on("message", (data) => {
+        console.log(data);
+        })
+ }
+}
+
+//  function SendVideoMetaData() {
+// const data = {
+//     key: duration,
+//     url: urlVideo,
+//     groupID: groupID,
+//     isPlay: isPlay
+// };
+
+// const options = {
+//     method: 'POST',
+//     headers: {
+//         'Content-Type': 'application/json'
+//     },
+//     body: JSON.stringify(data)
+// };
+
+// fetch(BASE_URL, options)
+//     .then(response => {
+//         if (!response.ok) {
+//             throw new Error('Network response was not ok');
+//         }
+//         return response.json();
+//     })
+//     .then(data => {
+//     })
+//     .catch(error => {
+//         console.error('There was a problem with the fetch operation:', error);
+//     });
+
+//  }
+
+
+//  function ReceiveVideoMetaData() {
+//   chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+//       fetch(BASE_URL + "/?" + "groupID="+ groupID)
+//           .then(response => {
+//               if (!response.ok) {
+//                   throw new Error('Network response was not ok');
+//               }
+//               return response.json(); // Assuming the response is JSON
+//           })
+//           .then(data => {
+//               chrome.tabs.sendMessage(tabs[0].id, { type: 'getTimer', data: data });
+//           })
+//           .catch(error => {
+//               console.error('There was a problem with the fetch operation:', error);
+//           });
+//   });
+// }
 

@@ -9,6 +9,7 @@ let currTimer = 0;
 
 // to check if host id is available or not
 let isHostIDAvailable = false;
+let chances = 0;
 
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
@@ -32,15 +33,16 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
 
 
-function SendReceiveTimerData() {
+function SendReceiveTimerData(type = "timer") {
   currTimer++;
-  if (stateOfUser === "user") return;
+  if (stateOfUser === "user" || (chances > 0 && stateOfUser === "joiner")) return;
+  chances++;
   let player = document.getElementsByClassName("video-stream");
   console.log(player.pause)
   if (player && player[0] !== undefined) {
     duration = player[0].currentTime;
     chrome.runtime.sendMessage({
-      type: "timer",
+      type: type,
       duration: duration,
       stateOfUser: stateOfUser,
       url: window.location.href,
@@ -75,6 +77,9 @@ function ApplyTimer(duration, url, isPlay) {
     } else {
       player[0].play();
         }
+        // duration: host
+        // currTimer: joiner
+        // currTimer: duration
     if (duration - currTimer > 10 || duration - currTimer < -10) {
       console.log("current Timer update-----");
       currTimer = duration;
@@ -89,6 +94,7 @@ function ApplyTimer(duration, url, isPlay) {
 
 
   function onYouTubeIframeAPIReady() {
+
     document.getElementById("playBtn").addEventListener("click", function () {
       document.getElementsByClassName("video-stream")[0].play();
     });
@@ -97,15 +103,15 @@ function ApplyTimer(duration, url, isPlay) {
       document.getElementsByClassName("video-stream")[0].pause();
     });
 
-    document.getElementById("hostBtn").addEventListener("click", function () {
+      document.getElementById("hostBtn").addEventListener("click", function () {
       groupID = generateRandomString(10);
       document.getElementById("groupHostId").innerHTML = 'Group ID: ' + groupID;
-      console.log(generateRandomString(10));
       document.getElementById("hostBtn").disabled = true;
       document.getElementById("joinPartyBtn").disabled = true;
       document.getElementById("hostBtn").style.backgroundColor = "gray";
       document.getElementById("joinPartyBtn").style.display = "none";
       stateOfUser = "host";
+      SendReceiveTimerData("hostConnection");
 
     });
 
@@ -113,6 +119,8 @@ function ApplyTimer(duration, url, isPlay) {
       groupID = document.getElementById("groupID").value;
       stateOfUser = "joiner";
       document.getElementById("hostBtn").style.display = "none";
+      SendReceiveTimerData("joinConnection");
+      justOnce = true;
     });
 
   }
